@@ -2,16 +2,22 @@
 
 import { search } from "@/app/search";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function Search() {
+export function Search(props?: {
+  logs?: { ms: number; tool: string; toolInput: string; log: string }[];
+  result?: { output?: string };
+}) {
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(
+    props?.result?.output ?? null
+  );
   const [pending, setPending] = useState<boolean>(false);
   const [logs, setLogs] = useState<
     { ms: number; tool: string; toolInput: string; log: string }[]
-  >([]);
-  const [ref, setRef] = useState<HTMLInputElement | null>(null);
+  >(props?.logs ?? []);
+  const { push } = useRouter();
 
   return (
     <main className="flex min-h-screen flex-col space-y-8 items-center p-24 max-w-2xl mx-auto">
@@ -24,17 +30,14 @@ export default function Search() {
           setLogs([]);
           const result = await search(new FormData(event.currentTarget));
           if ("error" in result) setError(result.error);
-          else setResult(result.result);
-          setLogs(result.logs);
-          setPending(false);
-          requestAnimationFrame(() => ref?.focus());
+          else push(`/${result.uuid}`);
         }}
         className="w-full"
       >
         <label className="flex flex-col space-y-4 w-full">
           <span className="text-2xl font-bold">Ask a question</span>
           <input
-            ref={setRef}
+            autoFocus
             name="query"
             className="block w-full px-5 py-3 bg-white border-gray-300 rounded-md shadow focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-slate-400 disabled:bg-white disabled:cursor-not-allowed"
             type="search"

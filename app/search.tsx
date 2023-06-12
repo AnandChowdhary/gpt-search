@@ -1,5 +1,6 @@
 "use server";
 
+import { sql } from "@vercel/postgres";
 import { initializeAgentExecutorWithOptions } from "langchain/agents";
 import { BaseCallbackHandler } from "langchain/callbacks";
 import { ChatOpenAI } from "langchain/chat_models/openai";
@@ -7,6 +8,7 @@ import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import type { AgentAction } from "langchain/schema";
 import { GoogleCustomSearch } from "langchain/tools";
 import { WebBrowser } from "langchain/tools/webbrowser";
+import { v4 as uuidv4 } from "uuid";
 
 const { GOOGLE_CUSTOM_SEARCH_ENGINE_ID, GOOGLE_CUSTOM_SEARCH_API_KEY } =
   process.env;
@@ -21,15 +23,21 @@ const tools = [
   new WebBrowser({ model: chat, embeddings }),
 ];
 
+export async function getSearchResult(uuid: string) {
+  const result = await sql<{
+    result: string;
+  }>`SELECT result FROM SearchResult WHERE slug = ${uuid} LIMIT 1`;
+  if (!result.rows[0]?.result) return { error: "No result found" };
+  return JSON.parse(result.rows[0].result);
+}
+
 export async function search(
   data: FormData
-): Promise<
-  | { logs: (AgentAction & { ms: number })[]; error: string }
-  | { logs: (AgentAction & { ms: number })[]; result: string }
-> {
+): Promise<{ uuid: string } | { error: string }> {
   const query = data.get("query")?.toString();
-  if (!query) return { logs: [], error: "No query provided" };
+  const uuid = uuidv4();
 
+  if (!query) return { error: "No query provided" };
   const logs: (AgentAction & { ms: number })[] = [];
   const logsStart = Date.now();
 
@@ -48,14 +56,14 @@ export async function search(
 
   try {
     const result = await executor.call({ input: query, timeout: 30_000 });
-    if ("output" in result) {
-      return { logs, result: result.output };
-    } else if ("error" in result) {
-      return { logs, error: result.error };
-    } else {
-      return { logs, error: "I was unable to answer this question." };
-    }
+    await sql`INSERT INTO SearchResult (slug, duration, query, result) VALUES (${uuid}, ${
+      Date.now() - logsStart
+    }, ${query}, ${JSON.stringify({
+      logs,
+      result,
+    })})`;
+    return { uuid };
   } catch (error) {
-    return { logs, error: String(error) };
+    return { error: String(error) };
   }
 }
