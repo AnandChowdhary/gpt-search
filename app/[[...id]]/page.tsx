@@ -8,8 +8,8 @@ export default async function Handler({
 }) {
   if (params && "id" in params && params.id && params.id.length > 0) {
     const data = await getSearchResult(params.id[0]);
-    console.log({ data });
-    if ("error" in data) return <div>Unknown</div>;
+    if ("error" in data && !("logs" in data))
+      return <Search error="Unable to find this answer" />;
     return <Search {...data} />;
   }
 

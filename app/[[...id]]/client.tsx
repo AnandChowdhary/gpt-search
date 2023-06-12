@@ -2,46 +2,33 @@
 
 import { search } from "@/app/search";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function Search(props?: {
+  query?: string;
   logs?: { ms: number; tool: string; toolInput: string; log: string }[];
   result?: { output?: string };
+  error?: string;
 }) {
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(
-    props?.result?.output ?? null
-  );
   const [pending, setPending] = useState<boolean>(false);
-  const [logs, setLogs] = useState<
-    { ms: number; tool: string; toolInput: string; log: string }[]
-  >(props?.logs ?? []);
-  const { push } = useRouter();
 
   return (
     <main className="flex min-h-screen flex-col space-y-8 items-center p-24 max-w-2xl mx-auto">
       <form
-        onSubmit={async (event) => {
-          event.preventDefault();
-          setPending(true);
-          setError(null);
-          setResult(null);
-          setLogs([]);
-          const result = await search(new FormData(event.currentTarget));
-          if ("error" in result) setError(result.error);
-          else push(`/${result.uuid}`);
-        }}
+        action={search}
+        onSubmit={() => setPending(true)}
         className="w-full"
       >
         <label className="flex flex-col space-y-4 w-full">
-          <span className="text-2xl font-bold">Ask a question</span>
+          <span className="text-2xl font-bold">Ask Jeeves</span>
           <input
             autoFocus
+            defaultValue={props?.query}
             name="query"
             className="block w-full px-5 py-3 bg-white border-gray-300 rounded-md shadow focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-slate-400 disabled:bg-white disabled:cursor-not-allowed"
             type="search"
             placeholder="What is the meaning of life?"
+            required
             disabled={pending}
           />
           <div>
@@ -52,27 +39,28 @@ export function Search(props?: {
               }`}
               disabled={pending}
             >
-              {pending ? "Thinking..." : "Ask Jeeves"}
+              {pending ? "Thinking..." : "Ask your question"}
             </button>
           </div>
         </label>
       </form>
-      {error ? (
+      {!pending && props?.error ? (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative w-full">
           <strong className="font-bold">Error</strong>
-          <span className="ml-3">{error}</span>
+          <span className="ml-3">{props?.error}</span>
         </div>
       ) : (
-        result && (
+        !pending &&
+        props?.result && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative w-full">
-            {result}
+            {props.result.output}
           </div>
         )
       )}
-      {logs.length > 0 && (
-        <details className="w-full space-y-4">
-          <summary className="font-medium">🧠 Thought process</summary>
-          {logs.map((log, index) => (
+      {!pending && props?.logs && props.logs.length > 0 && (
+        <section className="w-full space-y-4">
+          <h2 className="font-medium">🧠 Thought process</h2>
+          {props.logs.map((log, index) => (
             <div key={index} className="bg-white rounded-lg shadow">
               <div className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
@@ -92,7 +80,7 @@ export function Search(props?: {
               </div>
             </div>
           ))}
-        </details>
+        </section>
       )}
       <footer className="w-full">
         <p>
