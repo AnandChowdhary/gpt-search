@@ -1,6 +1,7 @@
 "use client";
 
 import { search } from "@/app/search";
+import Image from "next/image";
 import { useState } from "react";
 
 export default function Search() {
@@ -90,6 +91,24 @@ export default function Search() {
           ))}
         </details>
       )}
+      <footer className="w-full">
+        <p>
+          <a
+            href="https://github.com/AnandChowdhary/gpt-search"
+            className="text-slate-500 hover:text-slate-400 inline-flex items-center space-x-2"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              width={20}
+              height={20}
+              alt="GitHub"
+              src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg"
+            />
+            <span>AnandChowdhary/gpt-search</span>
+          </a>
+        </p>
+      </footer>
     </main>
   );
 }
