@@ -20,7 +20,7 @@ export function Search(props?: {
         className="w-full"
       >
         <label className="flex flex-col space-y-4 w-full">
-          <span className="text-2xl font-bold">Ask Jeeves</span>
+          <span className="text-2xl font-bold">🔍 Ask Jeeves</span>
           <input
             autoFocus
             defaultValue={props?.query}
