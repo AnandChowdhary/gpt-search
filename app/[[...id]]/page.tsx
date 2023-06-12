@@ -8,7 +8,7 @@ type Props = {
 
 export async function generateMetadata(
   { params }: Props,
-  parent?: ResolvingMetadata
+  parent: ResolvingMetadata
 ): Promise<Metadata> {
   const data =
     params && "id" in params && params.id && params.id.length > 0
